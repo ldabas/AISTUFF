@@ -12,7 +12,15 @@ import plotly.graph_objs as go
 import matplotlib.pyplot as plt
 from numpy import newaxis
 
-# 0. Get the Data and simple sorting and check NaN
+"""
+Exploratory data analysis in order to make observations and insights.
+
+Data files should be available in current folder to run!
+"""
+
+"""
+Import the data and clean it a bit
+"""
 df = pd.read_csv('./OHLCVs.csv',delimiter=',',usecols=['Unnamed: 0','open','high','low','close', 'pair'])
 df = df[df["pair"]=="btc-usd"]
 df.drop(["pair"], axis=1)
@@ -20,12 +28,11 @@ df.columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Pair']
 df.Date = pd.to_datetime(df.Date)
 df['Mean'] = (df.High + df.Low )/2.0
 df = df.sort_values(by="Date")
+df = df[:200000] # Only take first n values for display
 
-df = df[:100000]
-
-
-
-
+"""
+Set up seasonal decomposition and plotting (pyplot)
+"""
 from statsmodels.tsa.seasonal import seasonal_decompose
 decomposition = seasonal_decompose(df.Mean.values, freq=1) 
 trace1 = go.Scatter(
@@ -45,8 +52,9 @@ trace4 = go.Scatter(
     name = 'Mean Stock Value',mode='lines'
 )
 
-
-# a. Standard Average of Window
+"""
+Calculate moving average
+"""
 Mean_list = list(df.Mean)
 window_size = 500
 N = len(Mean_list)
@@ -54,7 +62,7 @@ std_avg_predictions = list(Mean_list[:window_size])
 for pred_idx in range(window_size,N):
     std_avg_predictions.append(np.mean(Mean_list[pred_idx-window_size:pred_idx]))
 
-# b. EXP Average of Window
+
 window_size = 500
 run_avg_predictions = []
 running_mean = 0.0
@@ -76,7 +84,9 @@ trace6 = go.Scatter(
 
 
 
-
+"""
+Calculate windowed moving average using statsmodels
+"""
 from statsmodels.tsa.ar_model import AR
 window_size = 50
 ar_list = list(Mean_list[:window_size])
@@ -94,6 +104,10 @@ trace7 = go.Scatter(
     name = 'Auto Regression',mode='lines'
 )
 
+
+"""
+Finally plotting 
+"""
 data = [trace1,trace2,trace3,trace4,trace5,trace6,trace7]
 plot(data)
 
